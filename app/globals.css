@@ -83,7 +83,14 @@ button { color: inherit; }
 .note-title-input::placeholder, .note-body::placeholder { color:#b2b3aa; }
 .note-meta { display:flex; gap:12px; align-items:center; margin:15px 0 30px; color:var(--muted); font:10px 'DM Mono', monospace; }
 .save-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); }
-.note-body { width:100%; min-height:440px; resize:none; border:0; outline:0; background:transparent; color:#393d37; font-size:15px; line-height:1.85; letter-spacing:-.005em; }
+.editor-body-stack { display:grid; gap:18px; }
+.note-body { width:100%; min-height:260px; resize:none; border:0; outline:0; background:transparent; color:#393d37; font-size:15px; line-height:1.85; letter-spacing:-.005em; white-space:pre-wrap; overflow-wrap:anywhere; direction:ltr; text-align:left; unicode-bidi:normal; }
+.note-body:empty:before { content: attr(data-placeholder); color:#b2b3aa; }
+.note-body h2 { margin:0.5em 0; font-size:1.5em; line-height:1.2; direction:ltr; text-align:left; }
+.note-body blockquote { margin:0.75em 0; padding-left:0.9rem; border-left:3px solid var(--accent); color:var(--muted); direction:ltr; text-align:left; }
+.note-body ul, .note-body ol { margin:0.8em 0; padding-left:1.4em; direction:ltr; text-align:left; }
+.note-body strong { font-weight:700; }
+.note-body em { font-style:italic; }
 .toolbar { position:sticky; bottom:18px; width:max-content; margin:0 auto; padding:7px; display:flex; gap:2px; background:rgba(251,250,246,.9); backdrop-filter:blur(14px); border:1px solid var(--line); border-radius:14px; box-shadow:0 12px 35px rgba(0,0,0,.08); }
 .tool { width:33px; height:31px; border:0; background:transparent; border-radius:8px; display:grid; place-items:center; cursor:pointer; color:#656a62; }
 .tool:hover { background:var(--soft); color:var(--ink); }

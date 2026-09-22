@@ -9,6 +9,7 @@ type View = 'all'|'pinned'|'archived'|'trash';
 const formatDate=(t:number)=>new Intl.DateTimeFormat('en',{month:'short',day:'numeric'}).format(new Date(t));
 const formatTime=(t:number)=>new Intl.DateTimeFormat('en',{hour:'2-digit',minute:'2-digit'}).format(new Date(t));
 const todayStart=()=>{const d=new Date(); d.setHours(0,0,0,0); return d.getTime();};
+const stripHtml=(value:string)=>value.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
 
 export default function Notee(){
   const [notes,setNotes]=useState<Note[]>([]);
@@ -18,7 +19,7 @@ export default function Notee(){
   const [dark,setDark]=useState(false);
   const [mobileView,setMobileView]=useState<'notes'|'editor'>('notes');
   const [toast,setToast]=useState<string | null>(null);
-  const bodyRef=useRef<HTMLTextAreaElement>(null);
+  const bodyRef=useRef<HTMLDivElement>(null);
 
   useEffect(()=>{
     try {
@@ -109,11 +110,46 @@ export default function Notee(){
     setView('all');
   };
 
-  const insert=(text:string)=>{ const el=bodyRef.current;if(!el||!selected)return; const s=el.selectionStart||0; const e=el.selectionEnd||0; const next=selected.body.slice(0,s)+text+selected.body.slice(e); update({body:next}); setTimeout(()=>{el.focus();el.selectionStart=el.selectionEnd=s+text.length;},0); };
+  useEffect(()=>{
+    const el=bodyRef.current;
+    if(!el || !selected) return;
+    if(el.innerHTML !== selected.body) {
+      el.innerHTML = selected.body || '';
+    }
+  }, [selected?.id, selected?.body]);
+
+  const applyFormatting=(type:'bold'|'italic'|'heading'|'checklist'|'quote')=>{
+    const el=bodyRef.current;
+    if(!el||!selected) return;
+
+    el.focus();
+
+    if(type==='bold') {
+      document.execCommand('bold');
+      return;
+    }
+
+    if(type==='italic') {
+      document.execCommand('italic');
+      return;
+    }
+
+    if(type==='heading') {
+      document.execCommand('formatBlock', false, 'h2');
+      return;
+    }
+
+    if(type==='checklist') {
+      document.execCommand('insertUnorderedList');
+      return;
+    }
+
+    document.execCommand('formatBlock', false, 'blockquote');
+  };
 
   const counts={all:notes.filter(n=>!n.archived&&!n.deleted).length,pinned:notes.filter(n=>n.pinned&&!n.deleted&&!n.archived).length,archived:notes.filter(n=>n.archived&&!n.deleted).length,trash:notes.filter(n=>n.deleted).length};
   const weekCount=notes.filter(n=>n.updatedAt>=todayStart()-6*86400000&&!n.deleted).length;
-  const words=selected?.body.trim()?selected.body.trim().split(/\s+/).length:0;
+  const words=selected ? (stripHtml(selected.body).split(/\s+/).filter(Boolean).length) : 0;
 
   return <div className="notee-shell">
     <header className="topbar"><div className="brand"><span className="brand-dot"/>Risha</div><div className="top-actions"><button className="icon-btn" title="Toggle theme" onClick={()=>setDark(!dark)}>{dark?<Sun size={17}/>:<Moon size={17}/>}</button></div></header>
@@ -138,7 +174,7 @@ export default function Notee(){
         </div>
 
         <div className="note-list">
-          {activeNotes.length===0 ? <div className="empty">Nothing here yet.<br/>Make a new note and start writing.</div> : activeNotes.map((n,i)=><div key={n.id}>{(i===0||formatDate(activeNotes[i-1].updatedAt)!==formatDate(n.updatedAt))&&<div className="day-label">{formatDate(n.updatedAt)}</div>}<button className={'note-row '+(selectedId===n.id?'selected':'')} onClick={()=>choose(n.id)}><div className="note-row-top"><span className="note-dot"/><span className="note-row-title">{n.title||'Untitled note'}</span>{n.pinned&&<Pin size={11}/>}<span className="note-time">{formatTime(n.updatedAt)}</span></div><p className="note-preview">{n.body.replace(/\n/g,' ')||'Empty note'}</p></button></div>)}
+          {activeNotes.length===0 ? <div className="empty">Nothing here yet.<br/>Make a new note and start writing.</div> : activeNotes.map((n,i)=><div key={n.id}>{(i===0||formatDate(activeNotes[i-1].updatedAt)!==formatDate(n.updatedAt))&&<div className="day-label">{formatDate(n.updatedAt)}</div>}<button className={'note-row '+(selectedId===n.id?'selected':'')} onClick={()=>choose(n.id)}><div className="note-row-top"><span className="note-dot"/><span className="note-row-title">{n.title||'Untitled note'}</span>{n.pinned&&<Pin size={11}/>}<span className="note-time">{formatTime(n.updatedAt)}</span></div><p className="note-preview">{stripHtml(n.body) || 'Empty note'}</p></button></div>)}
         </div>
       </section>
 
@@ -156,13 +192,26 @@ export default function Notee(){
           <div className="editor-content">
             <input id="note-title" className="note-title-input" value={selected.title} onChange={e=>update({title:e.target.value})} placeholder="Untitled note"/>
             <div className="note-meta"><span className="save-dot"/>Auto-saved locally<span>·</span><span>{words} words</span><span>·</span><span>{formatDate(selected.updatedAt)}</span></div>
-            <textarea ref={bodyRef} className="note-body" value={selected.body} onChange={e=>update({body:e.target.value})} placeholder="Start with whatever is on your mind..." />
+            <div className="editor-body-stack">
+              <div
+                ref={bodyRef}
+                className="note-body"
+                contentEditable
+                dir="ltr"
+                suppressContentEditableWarning
+                onInput={(e)=>{
+                  const html = e.currentTarget.innerHTML;
+                  update({ body: html });
+                }}
+                data-placeholder="Start with whatever is on your mind..."
+              />
+            </div>
             <div className="toolbar">
-              <button className="tool" title="Bold" onClick={()=>insert('**bold**')}><Bold size={15}/></button>
-              <button className="tool" title="Italic" onClick={()=>insert('_italic_')}><Italic size={15}/></button>
-              <button className="tool" title="Heading" onClick={()=>insert('\n## ')}><Hash size={16}/></button>
-              <button className="tool" title="Checklist" onClick={()=>insert('\n- [ ] ')}><CheckSquare size={15}/></button>
-              <button className="tool" title="Quote" onClick={()=>insert('\n> ')}><Quote size={15}/></button>
+              <button className="tool" title="Bold" onClick={()=>applyFormatting('bold')}><Bold size={15}/></button>
+              <button className="tool" title="Italic" onClick={()=>applyFormatting('italic')}><Italic size={15}/></button>
+              <button className="tool" title="Heading" onClick={()=>applyFormatting('heading')}><Hash size={16}/></button>
+              <button className="tool" title="Checklist" onClick={()=>applyFormatting('checklist')}><CheckSquare size={15}/></button>
+              <button className="tool" title="Quote" onClick={()=>applyFormatting('quote')}><Quote size={15}/></button>
               <button className="tool" title="Undo" onClick={()=>document.execCommand('undo')}><Undo2 size={15}/></button>
               <button className="tool" title="Redo" onClick={()=>document.execCommand('redo')}><Redo2 size={15}/></button>
             </div>
