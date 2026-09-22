@@ -11,7 +11,7 @@ const formatTime=(t:number)=>new Intl.DateTimeFormat('en',{hour:'2-digit',minute
 const todayStart=()=>{const d=new Date(); d.setHours(0,0,0,0); return d.getTime();};
 const stripHtml=(value:string)=>value.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
 
-export default function Notee(){
+export default function Risha(){
   const [notes,setNotes]=useState<Note[]>([]);
   const [selectedId,setSelectedId]=useState<string | null>(null);
   const [view,setView]=useState<View>('all');
@@ -23,13 +23,13 @@ export default function Notee(){
 
   useEffect(()=>{
     try {
-      const saved=localStorage.getItem('notee-notes');
+      const saved=localStorage.getItem('risha-notes');
       if(saved){
         const parsed=JSON.parse(saved);
         if(Array.isArray(parsed)) {
           const hasSeedNotes = parsed.some((note:any) => note && typeof note === 'object' && (note.title === 'Untitled note' || note.title === 'Welcome to Risha' || note.title === 'Welcome'));
           if(hasSeedNotes || parsed.length === 0) {
-            localStorage.removeItem('notee-notes');
+            localStorage.removeItem('risha-notes');
             setNotes([]);
           } else {
             setNotes(parsed);
@@ -37,17 +37,17 @@ export default function Notee(){
         }
       }
     } catch {
-      localStorage.removeItem('notee-notes');
+      localStorage.removeItem('risha-notes');
       setNotes([]);
     }
-    const savedDark=localStorage.getItem('notee-dark');
+    const savedDark=localStorage.getItem('risha-dark');
     if(savedDark==='1') setDark(true);
   },[]);
 
-  useEffect(()=>{ localStorage.setItem('notee-notes',JSON.stringify(notes)); },[notes]);
-  useEffect(()=>{ document.documentElement.dataset.theme=dark?'dark':'light'; localStorage.setItem('notee-dark',dark?'1':'0'); },[dark]);
+  useEffect(()=>{ localStorage.setItem('risha-notes',JSON.stringify(notes)); },[notes]);
+  useEffect(()=>{ document.documentElement.dataset.theme=dark?'dark':'light'; localStorage.setItem('risha-dark',dark?'1':'0'); },[dark]);
   useEffect(()=>{ if(!toast) return; const t=window.setTimeout(()=>setToast(null),1800); return ()=>window.clearTimeout(t); },[toast]);
-  useEffect(()=>{ const onKey=(e:KeyboardEvent)=>{ if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault(); document.getElementById('note-search')?.focus();} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault(); createNote();} }; window.addEventListener('keydown',onKey); return()=>window.removeEventListener('keydown',onKey); },[notes]);
+  useEffect(()=>{ const onKey=(e:KeyboardEvent)=>{ if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault(); document.getElementById('risha-search')?.focus();} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault(); createNote();} }; window.addEventListener('keydown',onKey); return()=>window.removeEventListener('keydown',onKey); },[notes]);
 
   const selected=notes.find(n=>n.id===selectedId) || null;
   const activeNotes=useMemo(()=>{
@@ -151,7 +151,7 @@ export default function Notee(){
   const weekCount=notes.filter(n=>n.updatedAt>=todayStart()-6*86400000&&!n.deleted).length;
   const words=selected ? (stripHtml(selected.body).split(/\s+/).filter(Boolean).length) : 0;
 
-  return <div className="notee-shell">
+  return <div className="risha-shell">
     <header className="topbar"><div className="brand"><span className="brand-dot"/>Risha</div><div className="top-actions"><button className="icon-btn" title="Toggle theme" onClick={()=>setDark(!dark)}>{dark?<Sun size={17}/>:<Moon size={17}/>}</button></div></header>
     <main className="workspace">
       <aside className="sidebar">
@@ -170,7 +170,7 @@ export default function Notee(){
             <h2 className="notes-title">{view==='trash'?'Trash':view==='archived'?'Archived':view==='pinned'?'Pinned':'All notes'}</h2>
             {view==='trash' && notes.some(n=>n.deleted) ? <button className="new-btn" onClick={clearTrash}><Trash2 size={14}/>Clear</button> : <button className="new-btn" onClick={createNote}><Plus size={14}/>New</button>}
           </div>
-          <div className="search"><Search size={14}/><input id="note-search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search notes..."/><span className="kbd">⌘ K</span></div>
+          <div className="search"><Search size={14}/><input id="risha-search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search notes..."/><span className="kbd">⌘ K</span></div>
         </div>
 
         <div className="note-list">

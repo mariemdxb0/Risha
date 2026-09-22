@@ -21,7 +21,7 @@ button, input, textarea { font: inherit; }
 button { color: inherit; }
 ::selection { background: var(--accent-2); }
 
-.notee-shell { min-height: 100vh; padding: 24px; }
+.risha-shell { min-height: 100vh; padding: 24px; }
 .topbar { max-width: 1380px; margin: 0 auto; padding: 14px 4px 16px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .brand { display:flex; align-items:center; gap:9px; font-weight:700; letter-spacing:-.03em; font-size:19px; line-height:1; padding-top:2px; }
 .brand-dot { width:9px; height:9px; border-radius:50%; background:var(--accent); border:1px solid rgba(0,0,0,.08); }
@@ -116,7 +116,7 @@ button { color: inherit; }
   .editor-content { padding-left:30px; padding-right:30px; }
 }
 @media (max-width: 820px) {
-  .notee-shell { padding:12px; }
+  .risha-shell { padding:12px; }
   .workspace { display:block; border-radius:20px; min-height:calc(100vh - 78px); }
   .sidebar { display:none; }
   .notes-panel { display:none; border:0; }
